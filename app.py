@@ -5,20 +5,17 @@ import hashlib
 app = Flask(__name__)
 app.secret_key = "secret123"
 
-# DB connection
 def get_db():
     return sqlite3.connect("bank.db")
 
-# Hash PIN
 def hash_pin(pin):
     return hashlib.sha256(pin.encode()).hexdigest()
 
-# Home Page
 @app.route("/")
 def home():
     return render_template("index.html")
 
-# Register
+# REGISTER
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
@@ -39,7 +36,7 @@ def register():
 
     return render_template("register.html")
 
-# Login
+# LOGIN
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
@@ -48,23 +45,20 @@ def login():
 
         conn = get_db()
         cursor = conn.cursor()
-
         cursor.execute(
             "SELECT * FROM users WHERE username=? AND pin=?",
             (username, pin)
         )
 
-        user = cursor.fetchone()
-
-        if user:
+        if cursor.fetchone():
             session["user"] = username
             return redirect("/dashboard")
-        else:
-            return "Invalid credentials"
+
+        return "Invalid credentials"
 
     return render_template("login.html")
 
-# Dashboard
+# DASHBOARD
 @app.route("/dashboard")
 def dashboard():
     if "user" not in session:
@@ -72,20 +66,49 @@ def dashboard():
 
     conn = get_db()
     cursor = conn.cursor()
-
-    cursor.execute(
-        "SELECT balance FROM users WHERE username=?",
-        (session["user"],)
-    )
-
+    cursor.execute("SELECT balance FROM users WHERE username=?", (session["user"],))
     balance = cursor.fetchone()[0]
 
     return render_template("dashboard.html", user=session["user"], balance=balance)
 
-# Logout
+# DEPOSIT
+@app.route("/deposit", methods=["POST"])
+def deposit():
+    amt = float(request.form["amount"])
+    conn = get_db()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "UPDATE users SET balance = balance + ? WHERE username=?",
+        (amt, session["user"])
+    )
+    conn.commit()
+
+    return redirect("/dashboard")
+
+# WITHDRAW
+@app.route("/withdraw", methods=["POST"])
+def withdraw():
+    amt = float(request.form["amount"])
+    conn = get_db()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT balance FROM users WHERE username=?", (session["user"],))
+    bal = cursor.fetchone()[0]
+
+    if amt <= bal:
+        cursor.execute(
+            "UPDATE users SET balance = balance - ? WHERE username=?",
+            (amt, session["user"])
+        )
+        conn.commit()
+
+    return redirect("/dashboard")
+
+# LOGOUT
 @app.route("/logout")
 def logout():
-    session.pop("user", None)
+    session.clear()
     return redirect("/")
 
 if __name__ == "__main__":
