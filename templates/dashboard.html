@@ -6,101 +6,7 @@
     <title>Dashboard | BHARATH Bank</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <style>
-        .dashboard-layout {
-            display: flex;
-            min-height: 100vh;
-        }
-        
-        .sidebar {
-            width: 250px;
-            background: #1e293b;
-            color: white;
-            padding: 20px;
-            flex-shrink: 0;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .main-content {
-            flex-grow: 1;
-            padding: 30px;
-            background: #f8fafc;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-
-        .hash-box {
-            word-break: break-all;
-            font-family: monospace;
-            font-size: 0.75rem;
-            background: #f1f5f9;
-            padding: 10px;
-            border-radius: 6px;
-            color: #475569;
-            border: 1px solid #e2e8f0;
-        }
-
-        .nav-links {
-            list-style: none;
-            padding: 0;
-            margin-top: 40px;
-        }
-
-        .nav-links li {
-            padding: 12px 0;
-            border-bottom: 1px solid #334155;
-        }
-
-        .nav-links a {
-            color: #cbd5e1;
-            text-decoration: none;
-            display: block;
-        }
-
-        .nav-links a:hover {
-            color: white;
-        }
-
-        .delete-link {
-            color: #ef4444 !important; /* Bright Red */
-            font-weight: bold;
-        }
-
-        .logout-btn {
-            margin-top: auto;
-            color: #cbd5e1;
-            font-weight: bold;
-            text-decoration: none;
-            padding: 10px 0;
-        }
-
-        .logout-btn:hover {
-            color: #ef4444;
-        }
-
-        .btn-danger-outline {
-            display: inline-block;
-            margin-top: 10px;
-            color: #ef4444;
-            text-decoration: none;
-            font-size: 0.8rem;
-            border: 1px solid #ef4444;
-            padding: 5px 10px;
-            border-radius: 4px;
-        }
-
-        .btn-danger-outline:hover {
-            background: #ef4444;
-            color: white;
-        }
-    </style>
-</head>
+    </head>
 <body>
 
     <div class="dashboard-layout">
@@ -108,14 +14,23 @@
             <h2>🏦 BHARATH Bank</h2>
             <ul class="nav-links">
                 <li><a href="/dashboard">🏠 Dashboard</a></li>
-                <li><a href="#">💸 Transfers</a></li>
-                <li><a href="#">📊 Statements</a></li>
+                <li><a href="/change_pin">🔐 Change PIN</a></li>
                 <li><a href="/delete_account" class="delete-link">⚠️ Delete Account</a></li>
             </ul>
             <a href="/logout" class="logout-btn">Logout →</a>
         </aside>
 
         <main class="main-content">
+            {% with messages = get_flashed_messages() %}
+              {% if messages %}
+                {% for message in messages %}
+                  <div style="padding: 12px; background: #dcfce7; color: #166534; margin-bottom: 20px; border-radius: 6px; border-left: 5px solid #22c55e; font-weight: 600;">
+                      {{ message }}
+                  </div>
+                {% endfor %}
+              {% endif %}
+            {% endwith %}
+
             <header style="display: flex; justify-content: space-between; margin-bottom: 30px;">
                 <h1>Welcome back, {{ user }}!</h1>
                 <div style="text-align: right;">
@@ -124,7 +39,7 @@
             </header>
 
             <div class="stats-grid">
-                <div class="card balance-box" style="margin-bottom: 0; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                <div class="card balance-box" style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
                     <p style="color: #64748b;">Total Available Balance</p>
                     <h1 style="font-size: 2.5rem; margin: 10px 0; color: #1e293b;">₹{{ "{:,.2f}".format(balance) }}</h1>
                     <small style="color: #94a3b8;">Real-time updates enabled</small>
@@ -132,19 +47,24 @@
 
                 <div class="card" style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
                     <h3>Account Information</h3>
-                    <p><strong>Account Number:</strong> {{ acc_no }}</p>
-                    <p><strong>Username:</strong> {{ user }}</p>
-                    <p><strong>Security Hash (PIN):</strong></p>
-                    <div class="hash-box">
-                        {{ pin_hash }}
-                    </div>
+                    <p><strong>Acc No:</strong> {{ acc_no }}</p>
+                    <p><strong>User:</strong> {{ user }}</p>
                     <a href="/delete_account" class="btn-danger-outline">Close Account</a>
+                </div>
+
+                <div class="card" style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                    <h3>💸 Money Transfer</h3>
+                    <form action="/transfer" method="POST">
+                        <input type="number" name="target_acc" placeholder="Recipient Acc No" required style="width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #e2e8f0; border-radius: 4px;">
+                        <input type="number" name="amount" placeholder="Amount ₹" required style="width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #e2e8f0; border-radius: 4px;">
+                        <button type="submit" style="width: 100%; padding: 10px; background: #6366f1; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">Send Money</button>
+                    </form>
                 </div>
             </div>
 
             <div class="stats-grid">
                 <div class="card" style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-                    <h3>Quick Transactions</h3>
+                    <h3>Quick Actions</h3>
                     <div style="display: flex; gap: 10px;">
                         <form action="/deposit" method="POST" style="flex: 1;">
                             <input type="number" name="amount" placeholder="Deposit ₹" required style="width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #e2e8f0; border-radius: 4px;">
@@ -160,27 +80,7 @@
                 <div class="card" style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
                     <h3>Recent History</h3>
                     <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
-                        <thead>
-                            <tr style="text-align: left; border-bottom: 2px solid #f1f5f9;">
-                                <th style="padding: 10px 0;">Type</th>
-                                <th>Amount</th>
-                                <th>Date</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for txn in transactions %}
-                            <tr style="border-bottom: 1px solid #f1f5f9;">
-                                <td style="padding: 10px 0; font-weight: 600;" class="type-{{ txn.type }}">{{ txn.type }}</td>
-                                <td>₹{{ "{:,.2f}".format(txn.amount) }}</td>
-                                <td style="color: #94a3b8;">{{ txn.date }}</td>
-                            </tr>
-                            {% else %}
-                            <tr>
-                                <td colspan="3" style="text-align: center; padding: 20px; color: #94a3b8;">No recent transactions</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                        </table>
                 </div>
             </div>
         </main>
