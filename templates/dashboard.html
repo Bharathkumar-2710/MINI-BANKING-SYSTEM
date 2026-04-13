@@ -1,60 +1,163 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Dashboard | Apex Bank</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | BHARATH Bank</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Internal styles to ensure the "single file" dashboard looks right */
+        .dashboard-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        .sidebar {
+            width: 250px;
+            background: #1e293b;
+            color: white;
+            padding: 20px;
+            flex-shrink: 0;
+        }
+
+        .main-content {
+            flex-grow: 1;
+            padding: 30px;
+            background: #f8fafc;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .hash-box {
+            word-break: break-all;
+            font-family: monospace;
+            font-size: 0.75rem;
+            background: #f1f5f9;
+            padding: 10px;
+            border-radius: 6px;
+            color: #475569;
+            border: 1px solid #e2e8f0;
+        }
+
+        .nav-links {
+            list-style: none;
+            padding: 0;
+            margin-top: 40px;
+        }
+
+        .nav-links li {
+            padding: 12px 0;
+            border-bottom: 1px solid #334155;
+        }
+
+        .nav-links a {
+            color: #cbd5e1;
+            text-decoration: none;
+            display: block;
+        }
+
+        .nav-links a:hover {
+            color: white;
+        }
+
+        .logout-btn {
+            margin-top: auto;
+            color: #ef4444;
+            font-weight: bold;
+            text-decoration: none;
+        }
+    </style>
 </head>
 <body>
-    <div class="navbar">
-        <h2>Apex Bank</h2>
-        <a href="/logout">Logout</a>
+
+    <div class="dashboard-layout">
+        <aside class="sidebar">
+            <h2>🏦 Apex Bank</h2>
+            <ul class="nav-links">
+                <li><a href="/dashboard">🏠 Dashboard</a></li>
+                <li><a href="#">💸 Transfers</a></li>
+                <li><a href="#">📊 Statements</a></li>
+                <li><a href="/delete_account" style="color: #94a3b8;">⚙️ Settings</a></li>
+            </ul>
+            <br><br>
+            <a href="/logout" class="logout-btn">Logout →</a>
+        </aside>
+
+        <main class="main-content">
+            <header style="display: flex; justify-content: space-between; margin-bottom: 30px;">
+                <h1>Welcome back, {{ user }}!</h1>
+                <div style="text-align: right;">
+                    <span style="color: #64748b;">Account Active</span>
+                </div>
+            </header>
+
+            <div class="stats-grid">
+                <div class="card balance-box" style="margin-bottom: 0;">
+                    <p>Total Available Balance</p>
+                    <h1 style="font-size: 2.5rem; margin: 10px 0;">₹{{ "{:,.2f}".format(balance) }}</h1>
+                    <small>Real-time updates enabled</small>
+                </div>
+
+                <div class="card">
+                    <h3>Account Information</h3>
+                    <p><strong>Account Number:</strong> {{ acc_no }}</p>
+                    <p><strong>Username:</strong> {{ user }}</p>
+                    <p><strong>Security Hash (PIN):</strong></p>
+                    <div class="hash-box">
+                        {{ pin_hash }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="card">
+                    <h3>Quick Transactions</h3>
+                    <div style="display: flex; gap: 10px;">
+                        <form action="/deposit" method="POST" style="flex: 1;">
+                            <input type="number" name="amount" placeholder="Deposit ₹" required style="margin-bottom: 10px;">
+                            <button type="submit" style="background: #22c55e;">Deposit</button>
+                        </form>
+                        <form action="/withdraw" method="POST" style="flex: 1;">
+                            <input type="number" name="amount" placeholder="Withdraw ₹" required style="margin-bottom: 10px;">
+                            <button type="submit" style="background: #ef4444;">Withdraw</button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Recent History</h3>
+                    <table style="font-size: 0.9rem;">
+                        <thead>
+                            <tr>
+                                <th>Type</th>
+                                <th>Amount</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for txn in transactions %}
+                            <tr>
+                                <td class="type-{{ txn.type }}">{{ txn.type }}</td>
+                                <td>₹{{ "{:,.2f}".format(txn.amount) }}</td>
+                                <td style="color: #94a3b8;">{{ txn.date }}</td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="3" style="text-align: center; color: #94a3b8;">No recent transactions</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
     </div>
 
-    <div class="container">
-        <div class="card balance-display">
-            <p>Current Balance</p>
-            <h1>₹{{ "{:,.2f}".format(balance) }}</h1>
-            <p>User: {{ user }}</p>
-        </div>
-
-        <div class="grid">
-            <div class="card">
-                <h3>Deposit Funds</h3>
-                <form action="/deposit" method="POST">
-                    <input type="number" name="amount" placeholder="Amount to deposit" required min="1">
-                    <button type="submit">Add Cash</button>
-                </form>
-            </div>
-            <div class="card">
-                <h3>Withdraw Funds</h3>
-                <form action="/withdraw" method="POST">
-                    <input type="number" name="amount" placeholder="Amount to withdraw" required min="1">
-                    <button type="submit" style="background: var(--danger);">Withdraw Cash</button>
-                </form>
-            </div>
-        </div>
-
-        <div class="card">
-            <h3>Recent Transactions</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Type</th>
-                        <th>Amount</th>
-                        <th>Date</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for txn in transactions %}
-                    <tr>
-                        <td class="type-{{ txn.type }}">{{ txn.type }}</td>
-                        <td>₹{{ "{:,.2f}".format(txn.amount) }}</td>
-                        <td style="color: #64748b;">{{ txn.date }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
 </body>
 </html>
