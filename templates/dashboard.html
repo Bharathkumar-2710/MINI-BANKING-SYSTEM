@@ -7,7 +7,6 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        /* Internal styles to ensure the "single file" dashboard looks right */
         .dashboard-layout {
             display: flex;
             min-height: 100vh;
@@ -19,6 +18,8 @@
             color: white;
             padding: 20px;
             flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
         }
 
         .main-content {
@@ -66,11 +67,37 @@
             color: white;
         }
 
+        .delete-link {
+            color: #ef4444 !important; /* Bright Red */
+            font-weight: bold;
+        }
+
         .logout-btn {
             margin-top: auto;
-            color: #ef4444;
+            color: #cbd5e1;
             font-weight: bold;
             text-decoration: none;
+            padding: 10px 0;
+        }
+
+        .logout-btn:hover {
+            color: #ef4444;
+        }
+
+        .btn-danger-outline {
+            display: inline-block;
+            margin-top: 10px;
+            color: #ef4444;
+            text-decoration: none;
+            font-size: 0.8rem;
+            border: 1px solid #ef4444;
+            padding: 5px 10px;
+            border-radius: 4px;
+        }
+
+        .btn-danger-outline:hover {
+            background: #ef4444;
+            color: white;
         }
     </style>
 </head>
@@ -83,9 +110,8 @@
                 <li><a href="/dashboard">🏠 Dashboard</a></li>
                 <li><a href="#">💸 Transfers</a></li>
                 <li><a href="#">📊 Statements</a></li>
-                <li><a href="/delete_account" style="color: #94a3b8;">⚙️ Settings</a></li>
+                <li><a href="/delete_account" class="delete-link">⚠️ Delete Account</a></li>
             </ul>
-            <br><br>
             <a href="/logout" class="logout-btn">Logout →</a>
         </aside>
 
@@ -93,18 +119,18 @@
             <header style="display: flex; justify-content: space-between; margin-bottom: 30px;">
                 <h1>Welcome back, {{ user }}!</h1>
                 <div style="text-align: right;">
-                    <span style="color: #64748b;">Account Active</span>
+                    <span style="color: #22c55e; font-weight: bold;">● Account Active</span>
                 </div>
             </header>
 
             <div class="stats-grid">
-                <div class="card balance-box" style="margin-bottom: 0;">
-                    <p>Total Available Balance</p>
-                    <h1 style="font-size: 2.5rem; margin: 10px 0;">₹{{ "{:,.2f}".format(balance) }}</h1>
-                    <small>Real-time updates enabled</small>
+                <div class="card balance-box" style="margin-bottom: 0; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                    <p style="color: #64748b;">Total Available Balance</p>
+                    <h1 style="font-size: 2.5rem; margin: 10px 0; color: #1e293b;">₹{{ "{:,.2f}".format(balance) }}</h1>
+                    <small style="color: #94a3b8;">Real-time updates enabled</small>
                 </div>
 
-                <div class="card">
+                <div class="card" style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
                     <h3>Account Information</h3>
                     <p><strong>Account Number:</strong> {{ acc_no }}</p>
                     <p><strong>Username:</strong> {{ user }}</p>
@@ -112,44 +138,45 @@
                     <div class="hash-box">
                         {{ pin_hash }}
                     </div>
+                    <a href="/delete_account" class="btn-danger-outline">Close Account</a>
                 </div>
             </div>
 
             <div class="stats-grid">
-                <div class="card">
+                <div class="card" style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
                     <h3>Quick Transactions</h3>
                     <div style="display: flex; gap: 10px;">
                         <form action="/deposit" method="POST" style="flex: 1;">
-                            <input type="number" name="amount" placeholder="Deposit ₹" required style="margin-bottom: 10px;">
-                            <button type="submit" style="background: #22c55e;">Deposit</button>
+                            <input type="number" name="amount" placeholder="Deposit ₹" required style="width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #e2e8f0; border-radius: 4px;">
+                            <button type="submit" style="width: 100%; padding: 8px; background: #22c55e; color: white; border: none; border-radius: 4px; cursor: pointer;">Deposit</button>
                         </form>
                         <form action="/withdraw" method="POST" style="flex: 1;">
-                            <input type="number" name="amount" placeholder="Withdraw ₹" required style="margin-bottom: 10px;">
-                            <button type="submit" style="background: #ef4444;">Withdraw</button>
+                            <input type="number" name="amount" placeholder="Withdraw ₹" required style="width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #e2e8f0; border-radius: 4px;">
+                            <button type="submit" style="width: 100%; padding: 8px; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer;">Withdraw</button>
                         </form>
                     </div>
                 </div>
 
-                <div class="card">
+                <div class="card" style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
                     <h3>Recent History</h3>
-                    <table style="font-size: 0.9rem;">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
                         <thead>
-                            <tr>
-                                <th>Type</th>
+                            <tr style="text-align: left; border-bottom: 2px solid #f1f5f9;">
+                                <th style="padding: 10px 0;">Type</th>
                                 <th>Amount</th>
                                 <th>Date</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for txn in transactions %}
-                            <tr>
-                                <td class="type-{{ txn.type }}">{{ txn.type }}</td>
+                            <tr style="border-bottom: 1px solid #f1f5f9;">
+                                <td style="padding: 10px 0; font-weight: 600;" class="type-{{ txn.type }}">{{ txn.type }}</td>
                                 <td>₹{{ "{:,.2f}".format(txn.amount) }}</td>
                                 <td style="color: #94a3b8;">{{ txn.date }}</td>
                             </tr>
                             {% else %}
                             <tr>
-                                <td colspan="3" style="text-align: center; color: #94a3b8;">No recent transactions</td>
+                                <td colspan="3" style="text-align: center; padding: 20px; color: #94a3b8;">No recent transactions</td>
                             </tr>
                             {% endfor %}
                         </tbody>
