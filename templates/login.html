@@ -1,6 +1,27 @@
-<h2>Login</h2>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login - Mini Bank</title>
+</head>
+<body>
+
+<h2>🔐 Login</h2>
+
 <form method="POST">
-    Username: <input type="text" name="username"><br>
-    PIN: <input type="password" name="pin"><br>
+
+    <label>Username:</label><br>
+    <input type="text" name="username" required><br><br>
+
+    <label>PIN:</label><br>
+    <input type="password" name="pin" required minlength="4"><br><br>
+
     <button type="submit">Login</button>
+
 </form>
+
+<br>
+
+<a href="/register">Create New Account</a>
+
+</body>
+</html>

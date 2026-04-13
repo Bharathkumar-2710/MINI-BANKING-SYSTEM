@@ -1,6 +1,27 @@
-<h2>Register</h2>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Register - Mini Bank</title>
+</head>
+<body>
+
+<h2>📝 Create Account</h2>
+
 <form method="POST">
-    Username: <input type="text" name="username"><br>
-    PIN: <input type="password" name="pin"><br>
-    <button type="submit">Create Account</button>
+
+    <label>Username:</label><br>
+    <input type="text" name="username" required><br><br>
+
+    <label>PIN (min 4 digits):</label><br>
+    <input type="password" name="pin" required minlength="4"><br><br>
+
+    <button type="submit">Register</button>
+
 </form>
+
+<br>
+
+<a href="/login">Already have an account?</a>
+
+</body>
+</html>
