@@ -1,12 +1,15 @@
-from flask import Flask, render_template, request, redirect, session
+from flask import Flask, render_template, request, redirect, session, flash
 import sqlite3
 import hashlib
+from datetime import datetime
 
 app = Flask(__name__)
-app.secret_key = "secret123"
+app.secret_key = "banking_secret_key_123"
 
 def get_db():
-    return sqlite3.connect("bank.db")
+    conn = sqlite3.connect("bank.db")
+    conn.row_factory = sqlite3.Row # Allows accessing columns by name
+    return conn
 
 def hash_pin(pin):
     return hashlib.sha256(pin.encode()).hexdigest()
@@ -15,97 +18,68 @@ def hash_pin(pin):
 def home():
     return render_template("index.html")
 
-# REGISTER
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
         username = request.form["username"]
         pin = hash_pin(request.form["pin"])
-
         try:
             conn = get_db()
             cursor = conn.cursor()
-            cursor.execute(
-                "INSERT INTO users (username, pin, balance) VALUES (?, ?, ?)",
-                (username, pin, 0)
-            )
+            cursor.execute("INSERT INTO users (username, pin, balance) VALUES (?, ?, ?)", (username, pin, 0))
             conn.commit()
             return redirect("/login")
         except:
             return "User already exists"
-
     return render_template("register.html")
 
-# LOGIN
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
         username = request.form["username"]
         pin = hash_pin(request.form["pin"])
-
         conn = get_db()
-        cursor = conn.cursor()
-        cursor.execute(
-            "SELECT * FROM users WHERE username=? AND pin=?",
-            (username, pin)
-        )
-
-        if cursor.fetchone():
+        user = conn.execute("SELECT * FROM users WHERE username=? AND pin=?", (username, pin)).fetchone()
+        if user:
             session["user"] = username
             return redirect("/dashboard")
-
         return "Invalid credentials"
-
     return render_template("login.html")
 
-# DASHBOARD
 @app.route("/dashboard")
 def dashboard():
-    if "user" not in session:
-        return redirect("/login")
-
+    if "user" not in session: return redirect("/login")
     conn = get_db()
-    cursor = conn.cursor()
-    cursor.execute("SELECT balance FROM users WHERE username=?", (session["user"],))
-    balance = cursor.fetchone()[0]
+    balance = conn.execute("SELECT balance FROM users WHERE username=?", (session["user"],)).fetchone()[0]
+    # Fetch last 5 transactions
+    txns = conn.execute("SELECT type, amount, date FROM transactions WHERE username=? ORDER BY id DESC LIMIT 5", (session["user"],)).fetchall()
+    return render_template("dashboard.html", user=session["user"], balance=balance, transactions=txns)
 
-    return render_template("dashboard.html", user=session["user"], balance=balance)
-
-# DEPOSIT
 @app.route("/deposit", methods=["POST"])
 def deposit():
     amt = float(request.form["amount"])
-    conn = get_db()
-    cursor = conn.cursor()
-
-    cursor.execute(
-        "UPDATE users SET balance = balance + ? WHERE username=?",
-        (amt, session["user"])
-    )
-    conn.commit()
-
+    if amt > 0:
+        conn = get_db()
+        conn.execute("UPDATE users SET balance = balance + ? WHERE username=?", (amt, session["user"]))
+        date = datetime.now().strftime("%Y-%m-%d %H:%M")
+        conn.execute("INSERT INTO transactions (username, type, amount, date) VALUES (?, ?, ?, ?)", 
+                     (session["user"], "Deposit", amt, date))
+        conn.commit()
     return redirect("/dashboard")
 
-# WITHDRAW
 @app.route("/withdraw", methods=["POST"])
 def withdraw():
     amt = float(request.form["amount"])
     conn = get_db()
-    cursor = conn.cursor()
-
-    cursor.execute("SELECT balance FROM users WHERE username=?", (session["user"],))
-    bal = cursor.fetchone()[0]
-
-    if amt <= bal:
-        cursor.execute(
-            "UPDATE users SET balance = balance - ? WHERE username=?",
-            (amt, session["user"])
-        )
+    bal = conn.execute("SELECT balance FROM users WHERE username=?", (session["user"],)).fetchone()[0]
+    if 0 < amt <= bal:
+        conn.execute("UPDATE users SET balance = balance - ? WHERE username=?", (amt, session["user"]))
+        date = datetime.now().strftime("%Y-%m-%d %H:%M")
+        conn.execute("INSERT INTO transactions (username, type, amount, date) VALUES (?, ?, ?, ?)", 
+                     (session["user"], "Withdraw", amt, date))
         conn.commit()
-
     return redirect("/dashboard")
 
-# LOGOUT
 @app.route("/logout")
 def logout():
     session.clear()
